@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>재외국민특별전형 자가진단 계산기</title>
+<!-- React 18 UMD & Babel Standalone -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap');
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Noto Sans KR',sans-serif; background:#020617; color:#e5e7eb; }
+
+  .app-header {
+    background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e293b 100%);
+    color:#fff; padding:18px 16px; text-align:center; position:sticky; top:0; z-index:100;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.8); border-bottom:1px solid rgba(148,163,184,0.4);
+  }
+  .app-header h1 { font-size:1.25rem; font-weight:800; letter-spacing:-0.04em; }
+  .app-header p { font-size:0.8rem; opacity:0.85; margin-top:4px; }
+
+  .wizard-progress {
+    display:flex; align-items:center; justify-content:space-between; padding:10px 12px 6px;
+    background:#020617; position:sticky; top:64px; z-index:99; box-shadow:0 1px 4px rgba(15,23,42,0.9);
+    border-bottom:1px solid rgba(30,64,175,0.6);
+  }
+  .wizard-steps { display:flex; flex:1; gap:4px; margin-right:8px; }
+  .wizard-step-dot {
+    flex:1; height:6px; border-radius:999px; background:#0f172a; overflow:hidden;
+  }
+  .wizard-step-dot-fill { height:100%; background:linear-gradient(90deg,#2563eb,#38bdf8); }
+  .wizard-progress-text { font-size:0.75rem; color:#9ca3af; white-space:nowrap; }
+
+  .container { max-width:480px; margin:0 auto; padding:16px 12px 76px; }
+
+  .card {
+    background:#020617; border-radius:18px; padding:18px 16px; margin-bottom:14px;
+    box-shadow:0 10px 25px rgba(15,23,42,0.8); border:1px solid rgba(55,65,81,0.8);
+  }
+  .card h2 { font-size:1.02rem; font-weight:800; margin-bottom:8px; color:#e5e7eb;
+             display:flex; align-items:center; gap:8px; }
+  .step-tag {
+    font-size:0.7rem; padding:2px 8px; border-radius:999px;
+    background:rgba(37,99,235,0.15); color:#60a5fa; border:1px solid rgba(37,99,235,0.6);
+  }
+  .card p { font-size:0.8rem; color:#9ca3af; margin-bottom:10px; line-height:1.45; }
+
+  .field-group { margin-bottom:10px; }
+  .field-label { font-size:0.78rem; margin-bottom:4px; color:#e5e7eb; display:block; }
+  .field-label span { font-size:0.7rem; color:#9ca3af; margin-left:4px; }
+
+  input, select {
+    width:100%; padding:8px 10px; border-radius:10px;
+    border:1px solid #1f2937; background:#020617; color:#e5e7eb;
+    font-size:0.8rem; outline:none;
+  }
+  input:focus, select:focus {
+    border-color:#3b82f6; box-shadow:0 0 0 1px rgba(59,130,246,0.5);
+  }
+
+  .pill-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+  .pill {
+    padding:6px 10px; border-radius:999px; font-size:0.76rem; border:1px solid #1f2937;
+    background:#020617; color:#e5e7eb; cursor:pointer; display:flex; align-items:center; gap:6px;
+  }
+  .pill.active {
+    background:linear-gradient(135deg,#1d4ed8,#0ea5e9);
+    border-color:transparent; color:#eff6ff; box-shadow:0 4px 10px rgba(37,99,235,0.7);
+  }
+
+  .toggle-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .toggle {
+    display:flex; align-items:center; gap:6px; padding:6px 9px; border-radius:999px;
+    font-size:0.74rem; border:1px solid #1f2937; background:#020617; color:#e5e7eb; cursor:pointer;
+  }
+  .toggle span.icon { width:14px; height:14px; border-radius:999px; border:1px solid #4b5563;
+                      display:flex; align-items:center; justify-content:center; font-size:0.65rem; }
+  .toggle.active { border-color:#22c55e; background:rgba(22,163,74,0.12); }
+  .toggle.active span.icon { background:#22c55e; border-color:#22c55e; color:#022c22; }
+
+  .result-box {
+    margin-top:10px; padding:10px 10px; border-radius:12px;
+    background:rgba(15,23,42,0.95); border:1px solid #374151; font-size:0.78rem;
+  }
+  .result-title { font-weight:700; margin-bottom:4px; color:#e5e7eb; }
+  .result-sub { font-size:0.74rem; color:#9ca3af; }
+
+  .status-chip {
+    display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px;
+    font-size:0.7rem; margin-top:4px;
+  }
+  .status-chip.ok { background:rgba(22,163,74,0.1); color:#4ade80; border:1px solid #22c55e; }
+  .status-chip.no { background:rgba(185,28,28,0.1); color:#fca5a5; border:1px solid #ef4444; }
+
+  .years-table { width:100%; border-collapse:collapse; margin-top:6px; font-size:0.74rem; }
+  .years-table th, .years-table td {
+    padding:4px 3px; text-align:center; border-bottom:1px solid #111827;
+  }
+  .years-table th { color:#9ca3af; font-weight:500; }
+  .years-table input {
+    width:100%; padding:5px 4px; font-size:0.7rem;
+  }
+
+  .badge-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .badge {
+    font-size:0.7rem; padding:3px 8px; border-radius:999px;
+    background:rgba(15,23,42,0.9); color:#9ca3af; border:1px solid #1f2937;
+  }
+
+  .notice {
+    font-size:0.74rem; padding:8px 10px; border-radius:10px;
+    background:rgba(15,23,42,0.9); border:1px dashed rgba(148,163,184,0.8);
+    color:#9ca3af; margin-bottom:10px;
+  }
+
+  .faq-item { border-top:1px solid #111827; padding:8px 0; }
+  .faq-q { font-size:0.8rem; color:#e5e7eb; display:flex; justify-content:space-between; cursor:pointer; }
+  .faq-a { font-size:0.76rem; color:#9ca3af; margin-top:4px; line-height:1.4; }
+
+  .bottom-bar {
+    position:fixed; left:0; right:0; bottom:0; background:#020617;
+    border-top:1px solid rgba(30,64,175,0.8);
+    padding:8px 12px; display:flex; align-items:center; justify-content:space-between;
+    max-width:480px; margin:0 auto;
+  }
+  .bottom-inner { width:100%; display:flex; align-items:center; gap:8px; }
+
+  .step-info { flex:1; font-size:0.72rem; color:#9ca3af; }
+  .step-info span { display:block; }
+  .step-info strong { color:#e5e7eb; }
+
+  .btn {
+    border:none; border-radius:999px; padding:8px 12px; font-size:0.8rem;
+    display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;
+    white-space:nowrap;
+  }
+  .btn-secondary {
+    background:transparent; color:#9ca3af; border:1px solid #374151;
+  }
+  .btn-primary {
+    background:linear-gradient(135deg,#2563eb,#0ea5e9); color:#eff6ff;
+    box-shadow:0 6px 16px rgba(37,99,235,0.8); border:1px solid rgba(59,130,246,0.6);
+    flex-shrink:0;
+  }
+  .btn-primary:disabled {
+    opacity:0.45; box-shadow:none; cursor:not-allowed;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const STEPS = [
+  { id:1, title:"프로필", desc:"체류국·학교·전형부터 간단히 입력합니다." },
+  { id:2, title:"학교 인가 여부", desc:"내 학교가 인가인지 비인가인지 가늠합니다." },
+  { id:3, title:"3특·12특 자격", desc:"선택 전형 자격을 항목별로 확인합니다." },
+  { id:4, title:"체류일수 계산", desc:"날짜만 넣으면 3/4·2/3 기준을 자동 계산합니다." },
+  { id:5, title:"지필고사 대학", desc:"성적형 vs 지필형 비중을 정합니다." },
+  { id:6, title:"FAQ", desc:"자주 나오는 질문을 한 번에 정리합니다." }
+];
+
+// 체류국 문자열에서 region 분류
+function inferRegion(countryRaw){
+  const c = (countryRaw || "").toLowerCase();
+  if(!c) return "OTHER";
+  if(c.includes("usa") || c.includes("us") || c.includes("미국") || c.includes("california") || c.includes("ny")) return "US";
+  if(c.includes("uk") || c.includes("england") || c.includes("영국") ||
+     c.includes("germany") || c.includes("독일") ||
+     c.includes("france") || c.includes("프랑스") ||
+     c.includes("switzerland") || c.includes("스위스") ||
+     c.includes("netherlands") || c.includes("네덜란드")) return "IB";
+  if(c.includes("china") || c.includes("중국") || c.includes("shanghai") || c.includes("상하이") ||
+     c.includes("beijing") || c.includes("베이징") || c.includes("guangzhou") || c.includes("광저우") ||
+     c.includes("hongkong") || c.includes("홍콩")) return "CN";
+  if(c.includes("uae") || c.includes("dubai") || c.includes("두바이") ||
+     c.includes("saudi") || c.includes("사우디") ||
+     c.includes("qatar") || c.includes("카타르")) return "ME";
+  return "OTHER";
+}
+
+function App(){
+  const [step,setStep] = React.useState(1);
+
+  const [profile,setProfile] = React.useState({
+    country:"",
+    schoolType:"",
+    grade:"",
+    track:"3",
+    field:""
+  });
+
+  const region = inferRegion(profile.country);
+
+  const [accred,setAccred] = React.useState({
+    isForeign:"",        // "yes" | "no"
+    canConsular:false,
+    hasApostille:false,
+    onOfficialList:false,
+    isOnlineOnly:false
+  });
+
+  const [elig,setElig] = React.useState({
+    type:"3",
+    three:{
+      parent3yr:false,
+      student3yr:false,
+      high1yr:false,
+      abroadDuringParent:false,
+      noLocalForeignSchool:false,
+      notMixedCurriculum:false
+    },
+    twelve:{
+      full12:false,
+      noDomestic:false,
+      curriculumConsistent:false,
+      notGED:false
+    }
+  });
+
+  const [years,setYears] = React.useState([
+    { label:"Y1", from:"", to:"", krStudent:0, krParent:0 },
+    { label:"Y2", from:"", to:"", krStudent:0, krParent:0 },
+    { label:"Y3", from:"", to:"", krStudent:0, krParent:0 }
+  ]);
+
+  const [faqOpen,setFaqOpen] = React.useState(null);
+
+  const canNext = () => {
+    if(step===1){
+      return profile.schoolType && profile.grade;
+    }
+    if(step===2){
+      return accred.isForeign !== "";
+    }
+    if(step===3){
+      const block = elig.type==="3" ? elig.three : elig.twelve;
+      return Object.values(block).some(v=>v);
+    }
+    if(step===4){
+      return years.some(y=>y.from && y.to);
+    }
+    return true;
+  };
+
+  const nextStep = () => { if(step<STEPS.length) setStep(step+1); };
+  const prevStep = () => { if(step>1) setStep(step-1); };
+
+  const accredStatus = React.useMemo(()=>{
+    if(accred.isForeign==="no"){
+      return {status:"no", msg:"국내 소재 학교 재학 기간은 재외국민 전형 해외 이수로 인정되지 않습니다."};
+    }
+    if(!accred.isForeign){
+      return {status:null, msg:"먼저 해외 소재 학교인지 여부를 선택해 주세요."};
+    }
+    const ok = accred.canConsular || accred.hasApostille;
+    if(ok){
+      return {status:"ok", msg:"영사확인 또는 아포스티유 발급이 가능해 인가학교로 볼 가능성이 높습니다."};
+    }
+    return {status:"no", msg:"영사확인·아포스티유가 모두 어렵다면 비인가로 판정될 수 있으니, 반드시 공관에 문의해야 합니다."};
+  },[accred]);
+
+  const countDays = (from,to) => {
+    if(!from || !to) return 0;
+    const s = new Date(from);
+    const e = new Date(to);
+    const diff = (e - s) / (1000*60*60*24) + 1;
+    if(isNaN(diff) || diff<=0) return 0;
+    return diff;
+  };
+
+  const yearStats = years.map(y=>{
+    const total = countDays(y.from,y.to);
+    const krStu = Number(y.krStudent||0);
+    const krPar = Number(y.krParent||0);
+    const abroadStu = total - krStu;
+    const abroadPar = total - krPar;
+    const stuRate = total>0 ? abroadStu/total : 0;
+    const parRate = total>0 ? abroadPar/total : 0;
+    return {...y,total,abroadStu,abroadPar,stuRate,parRate};
+  });
+
+  const regionHintStep2 = (() => {
+    if(region==="US"){
+      return "미국식(AP·US GPA) 학교라면 성적표와 함께 School Profile(내신 스케일·과목 난이도 설명)을 준비해 두는 것이 좋습니다.";
+    }
+    if(region==="IB"){
+      return "유럽·IB권 학교라면 HL 과목 조합과 Predicted(예상점수) 관리가 중요합니다. IB Diploma 과목 선택을 따로 정리해 두세요.";
+    }
+    if(region==="CN"){
+      return "중국 본토·홍콩권 학교는 인가 여부·영사확인 가능 여부가 학교마다 달라, 관할 공관(영사관)에 사전 문의가 필수입니다.";
+    }
+    if(region==="ME"){
+      return "중동 지역은 파견 종료·조기 귀국 시 특례가 적용될 수 있어, 재직/재학 종료 시점을 꼭 기록해 두어야 합니다.";
+    }
+    return "학교 인가 여부는 국가와 상관없이 '영사확인·아포스티유 발급 가능 여부'가 가장 핵심 기준입니다.";
+  })();
+
+  const regionHintStep3 = (() => {
+    if(region==="US"){
+      return "미국식 커리큘럼에서는 GPA·과목 난이도(AP/Honors 여부)도 함께 정리해 두면, 나중에 서류 평가에서 도움이 됩니다.";
+    }
+    if(region==="IB"){
+      return "IB권이라면 3특/12특 자격과 별개로, IB 예상점수·최종점수와 HL/SL 구성까지 대학별 입결에 맞춰 확인해야 합니다.";
+    }
+    if(region==="CN"){
+      return "중국·홍콩권은 학제(중등/고등 연한)와 국내 학제 매칭이 애매한 경우가 많아, 학년 중복/누락을 특히 조심해야 합니다.";
+    }
+    if(region==="ME"){
+      return "중동 파견의 경우, 분쟁·철수로 인한 조기귀국이 3특/12특 자격에 어떤 영향을 주는지 대교협·대학 공지사항을 꼭 확인해야 합니다.";
+    }
+    return "3특·12특 자격 자체는 국가와 상관없이 '체류기간·학제 연속성·검정고시/온라인 여부'가 핵심입니다.";
+  })();
+
+  const regionHintStep4 = (() => {
+    if(region==="US"){
+      return "미국 학기는 보통 8월 말~5월 말 기준이라, 여름 방학 동안 한국 체류일이 길어질 수 있습니다. 방학 기간 한국 체류일을 대략 합산해 보세요.";
+    }
+    if(region==="IB"){
+      return "IB권은 시험 직후 귀국하는 경우가 많아, 마지막 학년(Y13 등)에서 한국 체류일이 길어지지 않도록 주의해야 합니다.";
+    }
+    if(region==="CN"){
+      return "중국·홍콩은 국경일·춘절 등 장기 휴일에 한국 체류가 잦을 수 있어, 휴일마다 한국 방문일을 대략 합쳐 보는 것이 좋습니다.";
+    }
+    if(region==="ME"){
+      return "중동 지역은 치안 이슈로 갑작스러운 귀국이 생길 수 있어, 실제 체류 종료일을 정확히 기억해 두는 것이 중요합니다.";
+    }
+    return "연도별로 '각 학년 동안 한국에 머문 총 일수'를 대략 적어 보면, 3/4·2/3 기준 충족 여부를 미리 가늠할 수 있습니다.";
+  })();
+
+  const regionHintStep5 = (() => {
+    if(region==="US"){
+      return "미국식의 경우, 성적형 전형(서류100%)에는 GPA·AP, 지필형 전형에는 수학·영어 지필 준비 비중을 적절히 나누는 것이 좋습니다.";
+    }
+    if(region==="IB"){
+      return "IB권에서는 IB 점수로 서류형 대학을 노리면서, 수학·과학 지필에 자신 있다면 공대·자연계 지필 전형을 도전해 볼 수 있습니다.";
+    }
+    if(region==="CN"){
+      return "중국권 학생은 국내 IB·미국식 경쟁자보다 내신·IB에서 불리하다고 느낄 수 있어, 지필고사 대학을 적정/안전으로 적극 활용하는 편이 좋습니다.";
+    }
+    if(region==="ME"){
+      return "중동 파견 학생은 조기귀국 등 변수로 GPA·시험이 꼬이는 경우가 있어, 지필·면접형 전형을 안전장치로 두는 전략이 권장됩니다.";
+    }
+    return "본인 성적·커리큘럼에 따라 서류형과 지필형의 비중을 나누되, 최소 1~2개 정도의 지필 전형을 안전권으로 두면 심리적으로도 안정됩니다.";
+  })();
+
+  const StepContent = () => {
+    if(step===1){
+      return (
+        <div className="card">
+          <h2><span className="step-tag">STEP 1</span>기본 프로필</h2>
+          <p>학교유형과 학년, 준비 전형을 입력하면 이후 단계 설명과 추천이 달라집니다.</p>
+
+          <div className="field-group">
+            <label className="field-label">체류국 / 지역 (선택)<span>예: 미국 캘리포니아, 중국 상하이</span></label>
+            <input
+              value={profile.country}
+              onChange={e=>setProfile({...profile,country:e.target.value})}
+              placeholder="예: 미국 캘리포니아, 중국 상하이 (생략 가능)"
+            />
+          </div>
+
+          <div className="field-group">
+            <label className="field-label">학교 유형</label>
+            <div className="pill-row">
+              {["현지 공립","현지 사립","국제학교(현지 인가)","국제학교(비인가 추정)"].map(v=>(
+                <button
+                  key={v}
+                  type="button"
+                  className={"pill"+(profile.schoolType===v?" active":"")}
+                  onClick={()=>setProfile({...profile,schoolType:v})}
+                >
+                  {profile.schoolType===v && <span>●</span>}
+                  <span>{v}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="field-group">
+            <label className="field-label">현재 학년</label>
+            <select
+              value={profile.grade}
+              onChange={e=>setProfile({...profile,grade:e.target.value})}
+            >
+              <option value="">선택하세요</option>
+              <option value="G8 이하">G8 이하</option>
+              <option value="G9">G9</option>
+              <option value="G10">G10</option>
+              <option value="G11">G11</option>
+              <option value="G12">G12</option>
+              <option value="졸업 예정">졸업 예정</option>
+            </select>
+          </div>
+
+          <div className="field-group">
+            <label className="field-label">준비 전형 / 트랙</label>
+            <div className="pill-row">
+              <button
+                type="button"
+                className={"pill"+(elig.type==="3"?" active":"")}
+                onClick={()=>setElig(prev=>({...prev,type:"3"}))}
+              >
+                {elig.type==="3" && <span>●</span>}
+                <span>3년특례(3특)</span>
+              </button>
+              <button
+                type="button"
+                className={"pill"+(elig.type==="12"?" active":"")}
+                onClick={()=>setElig(prev=>({...prev,type:"12"}))}
+              >
+                {elig.type==="12" && <span>●</span>}
+                <span>12년특례(12특)</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="field-group">
+            <label className="field-label">희망 계열 (선택)</label>
+            <div className="pill-row">
+              {["인문·사회","경영·경제","공학·이공","의약학","예체능","아직 모름"].map(v=>(
+                <button
+                  key={v}
+                  type="button"
+                  className={"pill"+(profile.field===v?" active":"")}
+                  onClick={()=>setProfile({...profile,field:v})}
+                >
+                  {profile.field===v && <span>●</span>}
+                  <span>{v}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if(step===2){
+      return (
+        <div className="card">
+          <h2><span className="step-tag">STEP 2</span>학교 인가 여부</h2>
+          <p>내 학교가 재외국민 전형에서 인정되는 <strong>인가학교</strong>인지 먼저 확인하는 단계입니다.</p>
+
+          <div className="field-group">
+            <label className="field-label">① 현재 학교가 해외에 있나요?</label>
+            <div className="pill-row">
+              <button
+                type="button"
+                className={"pill"+(accred.isForeign==="yes"?" active":"")}
+                onClick={()=>setAccred(prev=>({...prev,isForeign:"yes"}))}
+              >
+                {accred.isForeign==="yes" && <span>●</span>}
+                <span>네, 해외 소재 학교입니다</span>
+              </button>
+              <button
+                type="button"
+                className={"pill"+(accred.isForeign==="no"?" active":"")}
+                onClick={()=>setAccred(prev=>({...prev,isForeign:"no"}))}
+              >
+                {accred.isForeign==="no" && <span>●</span>}
+                <span>아니요, 국내 소재 학교입니다</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="field-group">
+            <label className="field-label">② 아래 항목 중 해당되는 것에 체크</label>
+            <div className="toggle-row">
+              <button
+                type="button"
+                className={"toggle"+(accred.canConsular?" active":"")}
+                onClick={()=>setAccred(a=>({...a,canConsular:!a.canConsular}))}
+              >
+                <span className="icon">{accred.canConsular?"✓":""}</span>
+                재학·성적증명서에 <strong>영사확인</strong> 도장을 받을 수 있다
+              </button>
+              <button
+                type="button"
+                className={"toggle"+(accred.hasApostille?" active":"")}
+                onClick={()=>setAccred(a=>({...a,hasApostille:!a.hasApostille}))}
+              >
+                <span className="icon">{accred.hasApostille?"✓":""}</span>
+                학교가 소재국에서 <strong>아포스티유</strong> 발급이 가능하다
+              </button>
+              <button
+                type="button"
+                className={"toggle"+(accred.onOfficialList?" active":"")}
+                onClick={()=>setAccred(a=>({...a,onOfficialList:!a.onOfficialList}))}
+              >
+                <span className="icon">{accred.onOfficialList?"✓":""}</span>
+                한국 교육부 <strong>학력인정학교 목록</strong>에 올라와 있다
+              </button>
+              <button
+                type="button"
+                className={"toggle"+(accred.isOnlineOnly?" active":"")}
+                onClick={()=>setAccred(a=>({...a,isOnlineOnly:!a.isOnlineOnly}))}
+              >
+                <span className="icon">{accred.isOnlineOnly?"✓":""}</span>
+                100% 온라인·홈스쿨·검정고시 기반이다
+              </button>
+            </div>
+          </div>
+
+          <div className="result-box">
+            <div className="result-title">판정 요약</div>
+            <div className="result-sub">가장 중요한 기준은 “<strong>영사확인 또는 아포스티유 발급 가능 여부</strong>”입니다.</div>
+            {accredStatus.status==="ok" && (
+              <div className="status-chip ok">
+                <span>●</span>
+                <span>{accredStatus.msg}</span>
+              </div>
+            )}
+            {accredStatus.status==="no" && (
+              <div className="status-chip no">
+                <span>!</span>
+                <span>{accredStatus.msg}</span>
+              </div>
+            )}
+            {!accredStatus.status && (
+              <div style={{marginTop:6,fontSize:"0.74rem",color:"#9ca3af"}}>
+                체크를 조금 더 하면 인가/비인가 가능성이 더 명확해집니다.
+              </div>
+            )}
+          </div>
+
+          <div className="notice">
+            <div style={{fontWeight:700, marginBottom:4}}>아포스티유란?</div>
+            <div style={{fontSize:"0.74rem", color:"#cbd5f5"}}>
+              외국에서 발급된 공문서를 다른 나라에서도 유효한 서류로 인정받기 위해 붙이는
+              <strong> 공식 인증 스티커/서명</strong>입니다. 보통 교육청·법원·공증 사무소 등에서
+              졸업증명서·성적표에 아포스티유를 붙인 뒤, 한국 대학에 제출하게 됩니다.
+            </div>
+          </div>
+
+          <div className="notice">
+            <div style={{fontWeight:700, marginBottom:4}}>지역별 참고</div>
+            <div style={{fontSize:"0.74rem", color:"#9ca3af"}}>
+              {regionHintStep2}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if(step===3){
+      const all3 = Object.values(elig.three).every(v=>v);
+      const all12 = Object.values(elig.twelve).every(v=>v);
+      const ok = elig.type==="3" ? all3 : all12;
+
+      return (
+        <div className="card">
+          <h2><span className="step-tag">STEP 3</span>3특·12특 자격 체크</h2>
+          <p>현재 선택한 전형 기준으로 <strong>지원 자격</strong>을 대략 확인합니다.</p>
+
+          <div className="field-group">
+            <label className="field-label">우선 고려 전형</label>
+            <div className="pill-row">
+              <button
+                type="button"
+                className={"pill"+(elig.type==="3"?" active":"")}
+                onClick={()=>setElig(prev=>({...prev,type:"3"}))}
+              >
+                {elig.type==="3" && <span>●</span>}
+                <span>3년특례(3특)</span>
+              </button>
+              <button
+                type="button"
+                className={"pill"+(elig.type==="12"?" active":"")}
+                onClick={()=>setElig(prev=>({...prev,type:"12"}))}
+              >
+                {elig.type==="12" && <span>●</span>}
+                <span>12년특례(12특)</span>
+              </button>
+            </div>
+          </div>
+
+          {elig.type==="3" ? (
+            <>
+              <div className="field-group">
+                <label className="field-label">3특 기본 항목</label>
+                <div className="toggle-row">
+                  <button
+                    type="button"
+                    className={"toggle"+(elig.three.parent3yr?" active":"")}
+                    onClick={()=>setElig(e=>({...e,three:{...e.three,parent3yr:!e.three.parent3yr}}))}
+                  >
+                    <span className="icon">{elig.three.parent3yr?"✓":""}</span>
+                    부모 1인이 동일 국가에서 <strong>3년 이상</strong> 근무/사업
+                  </button>
+                  <button
+                    type="button"
+                    className={"toggle"+(elig.three.student3yr?" active":"")}
+                    onClick={()=>setElig(e=>({...e,three:{...e.three,student3yr:!e.three.student3yr}}))}
+                  >
+                    <span className="icon">{elig.three.student3yr?"✓":""}</span>
+                    학생도 중·고교 과정에서 <strong>3년 이상</strong>을 그 국가에서 이수
+                  </button>
+                  <button
+                    type="button"
+                    className={"toggle"+(elig.three.high1yr?" active":"")}
+                    onClick={()=>setElig(e=>({...e,three:{...e.three,high1yr:!e.three.high1yr}}))}
+                  >
+                    <span className="icon">{elig.three.high1yr?"✓":""}</span>
+                    그 중 <strong>고교 1년 이상</strong> 포함
+                  </button>
+                  <button
+                    type="button"
+                    className={"toggle"+(elig.three.abroadDuringParent?" active":"")}
+                    onClick={()=>setElig(e=>({...e,three:{...e.three,abroadDuringParent:!e.three.abroadDuringParent}}))}
+                  >
+                    <span className="icon">{elig.three.abroadDuringParent?"✓":""}</span>
+                    학생 해외 재학 기간이 부모 해외 근무 기간과 대부분 겹침
+                  </button>
+                  <button
+                    type="button"
+                    className={"toggle"+(elig.three.noLocalForeignSchool?" active":"")}
+                    onClick={()=>setElig(e=>({...e,three:{...e.three,noLocalForeignSchool:!e.three.noLocalForeignSchool}}))}
+                  >
+                    <span className="icon">{elig.three.noLocalForeignSchool?"✓":""}</span>
+                    국내 외국인학교 재학 기간은 포함하지 않음
+                  </button>
+                  <button
+                    type="button"
+                    className={"toggle"+(elig.three.notMixedCurriculum?" active":"")}
+                    onClick={()=>setElig(e=>({...e,three:{...e.three,notMixedCurriculum:!e.three.notMixedCurriculum}}))}
+                  >
+                    <span className="icon">{elig.three.notMixedCurriculum?"✓":""}</span>
+                    검정고시·사이버고만으로 이수한 기간은 없음
+                  </button>
+                </div>
+              </div>
+
+              <div className="result-box">
+                <div className="result-title">3특 자격 판정(간이)</div>
+                {ok ? (
+                  <div className="status-chip ok">
+                    <span>●</span>
+                    <span>형식적 3특 요건을 대체로 충족하는 방향입니다. 출입국·재학증명 기준으로 최종 확인이 필요합니다.</span>
+                  </div>
+                ) : (
+                  <div className="status-chip no">
+                    <span>!</span>
+                    <span>빠진 항목이 있어 대학별 요강을 다시 확인해야 합니다. 특히 체류일수·부모 재직 기간을 주의하세요.</span>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="field-group">
+                <label className="field-label">12특 기본 항목</label>
+                <div className="toggle-row">
+                  <button
+                    type="button"
+                    className={"toggle"+(elig.twelve.full12?" active":"")}
+                    onClick={()=>setElig(e=>({...e,twelve:{...e.twelve,full12:!e.twelve.full12}}))}
+                  >
+                    <span className="icon">{elig.twelve.full12?"✓":""}</span>
+                    초·중·고 <strong>12년 전 과정</strong>을 해외 학교에서 이수
+                  </button>
+                  <button
+                    type="button"
+                    className={"toggle"+(elig.twelve.noDomestic?" active":"")}
+                    onClick={()=>setElig(e=>({...e,twelve:{...e.twelve,noDomestic:!e.twelve.noDomestic}}))}
+                  >
+                    <span className="icon">{elig.twelve.noDomestic?"✓":""}</span>
+                    국내 정규학교(외국인학교 포함) 재학 경험 없음
+                  </button>
+                  <button
+                    type="button"
+                    className={"toggle"+(elig.twelve.curriculumConsistent?" active":"")}
+                    onClick={()=>setElig(e=>({...e,twelve:{...e.twelve,curriculumConsistent:!e.twelve.curriculumConsistent}}))}
+                  >
+                    <span className="icon">{elig.twelve.curriculumConsistent?"✓":""}</span>
+                    국가 이동·학제 변경이 있어도 학년 중복/누락 없음
+                  </button>
+                  <button
+                    type="button"
+                    className={"toggle"+(elig.twelve.notGED?" active":"")}
+                    onClick={()=>setElig(e=>({...e,twelve:{...e.twelve,notGED:!e.twelve.notGED}}))}
+                  >
+                    <span className="icon">{elig.twelve.notGED?"✓":""}</span>
+                    검정고시·홈스쿨·온라인만으로 이수한 학년 없음
+                  </button>
+                </div>
+              </div>
+
+              <div className="result-box">
+                <div className="result-title">12특 자격 판정(간이)</div>
+                {all12 ? (
+                  <div className="status-chip ok">
+                    <span>●</span>
+                    <span>12특 기본 골격은 갖추고 있습니다. 학제 중복/누락 여부를 대학별로 다시 확인해야 합니다.</span>
+                  </div>
+                ) : (
+                  <div className="status-chip no">
+                    <span>!</span>
+                    <span>12년 전 과정 인정에서 빠지는 구간이 있을 수 있습니다. 학년별 재학증명서를 기준으로 세부 확인이 필요합니다.</span>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          <div className="notice">
+            <div style={{fontWeight:700, marginBottom:4}}>지역별 참고</div>
+            <div style={{fontSize:"0.74rem", color:"#9ca3af"}}>
+              {regionHintStep3}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if(step===4){
+      return (
+        <div className="card">
+          <h2><span className="step-tag">STEP 4</span>체류일수 계산</h2>
+          <div className="notice">
+            학년별 <strong>시작일·종료일</strong>만 입력하면 총 체류일수가 계산되고,
+            각 학년 동안 학생·부모가 한국에 머문 <strong>대략적인 일수</strong>를 넣으면 해외 체류 비율(3/4·2/3 기준)을 한눈에 볼 수 있습니다.
+            한국 방문이 여러 번이면, 우선 가장 길었던 구간 기준으로 일수를 대략 넣어도 괜찮습니다.
+          </div>
+
+          <table className="years-table">
+            <thead>
+              <tr>
+                <th>학년</th>
+                <th>시작일</th>
+                <th>종료일</th>
+                <th>총일</th>
+                <th>학생 한국 체류일수</th>
+                <th>부모 한국 체류일수</th>
+              </tr>
+            </thead>
+            <tbody>
+              {yearStats.map((y,idx)=>(
+                <tr key={y.label}>
+                  <td>{y.label}</td>
+                  <td>
+                    <input
+                      type="date"
+                      value={y.from}
+                      onChange={e=>{
+                        const newArr=[...years];
+                        newArr[idx]={...newArr[idx],from:e.target.value};
+                        setYears(newArr);
+                      }}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="date"
+                      value={y.to}
+                      onChange={e=>{
+                        const newArr=[...years];
+                        newArr[idx]={...newArr[idx],to:e.target.value};
+                        setYears(newArr);
+                      }}
+                    />
+                  </td>
+                  <td>{y.total || "-"}</td>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      value={y.krStudent}
+                      onChange={e=>{
+                        const newArr=[...years];
+                        newArr[idx]={...newArr[idx],krStudent:e.target.value};
+                        setYears(newArr);
+                      }}
+                      placeholder="예: 30 (대략 합계)"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      value={y.krParent}
+                      onChange={e=>{
+                        const newArr=[...years];
+                        newArr[idx]={...newArr[idx],krParent:e.target.value};
+                        setYears(newArr);
+                      }}
+                      placeholder="예: 20 (대략 합계)"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="result-box">
+            <div className="result-title">연도별 해외 체류 비율(학생 기준)</div>
+            {yearStats.map(y=>(
+              y.total>0 && (
+                <div key={y.label} style={{marginTop:4,fontSize:"0.74rem"}}>
+                  <strong>{y.label}</strong> : 해외 {y.abroadStu}일 / 전체 {y.total}일 ≈ {(y.stuRate*100).toFixed(1)}%
+                  {" "}
+                  {y.stuRate>=0.75 ? "(3/4 이상)" : y.stuRate>=0.67 ? "(2/3 이상)" : "(기준 미달 가능성)"}
+                </div>
+              )
+            ))}
+          </div>
+
+          <div className="notice">
+            <div style={{fontWeight:700, marginBottom:4}}>지역별 참고</div>
+            <div style={{fontSize:"0.74rem", color:"#9ca3af"}}>
+              {regionHintStep4}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if(step===5){
+      return (
+        <div className="card">
+          <h2><span className="step-tag">STEP 5</span>지필고사 대학 활용</h2>
+          <p>성적이 어느 정도 수준인지에 따라 서류형 vs 지필형 전형 비중을 나누는 단계입니다.</p>
+
+          <div className="notice">
+            이 단계에서는 “<strong>성적형 vs 지필형</strong>” 비율을 대략 정하는 것을 목표로 합니다.
+            실제 지필 과목·경쟁률은 최신 요강을 다시 확인해야 합니다.
+          </div>
+
+          <div className="result-box">
+            <div className="result-title">전략 예시</div>
+            <ul style={{paddingLeft:16,marginTop:4,fontSize:"0.76rem",color:"#9ca3af"}}>
+              <li>최상위권: 연·고·서·성·한 서류형 4~5개 + 지필 1~2개 도전.</li>
+              <li>상위권: 서성한·중이 서류형 3~4개 + 지필고사 대학 2~3개 섞기.</li>
+              <li>중상위·애매: 지필·면접형 3~4개 + 서류형은 “추가합격 기대” 수준으로 1~2개만.</li>
+            </ul>
+          </div>
+
+          <div className="notice">
+            <div style={{fontWeight:700, marginBottom:4}}>성적대별 지필 활용 기준(참고)</div>
+            <div style={{fontSize:"0.74rem", color:"#9ca3af", lineHeight:1.5}}>
+              · IB 42점 이상 또는 SAT 1530+ : 서류형 중심, 지필은 도전용 1~2개 정도면 충분한 편입니다.<br/>
+              · IB 38~41 또는 SAT 1460~1520 : 서성한·중이 서류형 메인, 지필 2~3개를 적정·안전으로 섞는 구간입니다.<br/>
+              · IB 34~37 또는 SAT 1380~1450 : 중·이·외대·국민 서류형 + 지필 2~3개를 함께 가져가는 전략이 적절합니다.<br/>
+              · IB 33 이하 또는 SAT 1370 이하 : 서류형보다는 지필·면접형 전형 비중을 3~4개로 늘리고, 서류형은 1~2개 정도로 최소화하는 것이 안전합니다.
+            </div>
+          </div>
+
+          <div className="notice">
+            <div style={{fontWeight:700, marginBottom:4}}>지역별 참고</div>
+            <div style={{fontSize:"0.74rem", color:"#9ca3af"}}>
+              {regionHintStep5}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if(step===6){
+      const faqs = [
+        {
+          q:"국내 외국인학교를 다녔는데, 3특·12특 가능?",
+          a:"국내 소재 외국인학교 재학 기간은 해외 이수로 인정되지 않습니다. 이전 해외 재학 기간만 따로 3특/12특 계산에 포함합니다."
+        },
+        {
+          q:"IB 점수가 낮은데 연고대 접어야 하나?",
+          a:"IB 40 이하 연고대 합격 사례도 있습니다. 전공 선택을 조정하고 비교과·전형참고자료·추천서 스토리가 강한 경우가 많습니다."
+        },
+        {
+          q:"국가를 여러 번 옮겨서 학년이 꼬였는데?",
+          a:"학년별 재학증명서·성적표·출입국 증명을 모두 꺼내서 ‘학력 연혁표’를 먼저 만드는 것이 중요합니다. 요강보다 이 표를 기준으로 자격을 따져야 합니다."
+        },
+        {
+          q:"G10/G11인데, 지금 당장 뭘 해야 하지?",
+          a:"G10은 과목 선택·GPA·기본 활동에 집중하고, G11부터는 표준화 시험(IB·SAT·AP 등)과 대학/전형 리스트업, 자기소개서 밑작업을 병행하는 것이 좋습니다."
+        }
+      ];
+      return (
+        <div className="card">
+          <h2><span className="step-tag">STEP 6</span>FAQ</h2>
+          {faqs.map((f,idx)=>(
+            <div key={idx} className="faq-item">
+              <div className="faq-q" onClick={()=>setFaqOpen(faqOpen===idx?null:idx)}>
+                <span>{f.q}</span>
+                <span>{faqOpen===idx?"−":"+"}</span>
+              </div>
+              {faqOpen===idx && <div className="faq-a">{f.a}</div>}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <>
+      <header className="app-header">
+        <h1>재외국민 3특·12특 자가진단 계산기</h1>
+        <p>체류국·학교·체류일만 넣으면, 누구나 스스로 지원 가능성을 가늠할 수 있는 페이지입니다.</p>
+      </header>
+
+      <div className="wizard-progress">
+        <div className="wizard-steps">
+          {STEPS.map((s,i)=>(
+            <div key={s.id} className="wizard-step-dot">
+              <div
+                className="wizard-step-dot-fill"
+                style={{width: i+1 <= step ? "100%" : "0%"}}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="wizard-progress-text">
+          STEP {step} / {STEPS.length}
+        </div>
+      </div>
+
+      <main className="container">
+        <StepContent/>
+      </main>
+
+      <div className="bottom-bar">
+        <div className="bottom-inner">
+          <button
+            className="btn btn-secondary"
+            onClick={prevStep}
+            disabled={step===1}
+          >
+            이전
+          </button>
+          <div className="step-info">
+            <span><strong>{STEPS[step-1].title}</strong></span>
+            <span>{STEPS[step-1].desc}</span>
+          </div>
+          <button
+            className="btn btn-primary"
+            onClick={nextStep}
+            disabled={!canNext() || step===STEPS.length}
+          >
+            {step===STEPS.length ? "완료" : "다음 단계"}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
