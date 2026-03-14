@@ -687,7 +687,11 @@ function App(){
                   <button
                     type="button"
                     className={"toggle"+(elig.twelve.curriculumConsistent?" active":"")}
-                    onClick={()=>setElig(e=>({...e,twelve:{...e.twelve,curriculumConsistent:!e.twelve.curriculumConsistent}))}
+                    onClick={()=>setElig(e=>({
+  ...e,
+  twelve:{...e.twelve,curriculumConsistent:!e.twelve.curriculumConsistent}
+}))}
+
                   >
                     <span className="icon">{elig.twelve.curriculumConsistent?"✓":""}</span>
                     국가 이동·학제 변경이 있어도 학년 중복/누락 없음
