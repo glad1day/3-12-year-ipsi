@@ -347,6 +347,17 @@ function App(){
     return "본인 성적·커리큘럼에 따라 서류형과 지필형의 비중을 나누되, 최소 1~2개 정도의 지필 전형을 안전권으로 두면 심리적으로도 안정됩니다.";
   })();
 
+  // 비제어 input용 ref
+  const countryRef = React.useRef(null);
+  const yRefs = React.useRef(
+    Array(3).fill(0).map(()=>({
+      from: React.createRef(),
+      to: React.createRef(),
+      stu: React.createRef(),
+      par: React.createRef()
+    }))
+  );
+
   const StepContent = () => {
     if(step===1){
       return (
@@ -360,8 +371,9 @@ function App(){
               autoComplete="off"
               inputMode="text"
               spellCheck={false}
-              value={profile.country}
-              onChange={e=>setProfile({...profile,country:e.target.value})}
+              defaultValue={profile.country}
+              ref={countryRef}
+              onBlur={e=>setProfile(p=>({...p,country:e.target.value}))}
               placeholder="예: 미국 캘리포니아, 중국 상하이 (생략 가능)"
             />
           </div>
@@ -374,7 +386,7 @@ function App(){
                   key={v}
                   type="button"
                   className={"pill"+(profile.schoolType===v?" active":"")}
-                  onClick={()=>setProfile({...profile,schoolType:v})}
+                  onClick={()=>setProfile(p=>({...p,schoolType:v}))}
                 >
                   {profile.schoolType===v && <span>●</span>}
                   <span>{v}</span>
@@ -387,7 +399,7 @@ function App(){
             <label className="field-label">현재 학년</label>
             <select
               value={profile.grade}
-              onChange={e=>setProfile({...profile,grade:e.target.value})}
+              onChange={e=>setProfile(p=>({...p,grade:e.target.value}))}
             >
               <option value="">선택하세요</option>
               <option value="G8 이하">G8 이하</option>
@@ -429,7 +441,7 @@ function App(){
                   key={v}
                   type="button"
                   className={"pill"+(profile.field===v?" active":"")}
-                  onClick={()=>setProfile({...profile,field:v})}
+                  onClick={()=>setProfile(p=>({...p,field:v}))}
                 >
                   {profile.field===v && <span>●</span>}
                   <span>{v}</span>
@@ -675,7 +687,7 @@ function App(){
                   <button
                     type="button"
                     className={"toggle"+(elig.twelve.curriculumConsistent?" active":"")}
-                    onClick={()=>setElig(e=>({...e,twelve:{...e.twelve,curriculumConsistent:!e.twelve.curriculumConsistent}}))}
+                    onClick={()=>setElig(e=>({...e,twelve:{...e.twelve,curriculumConsistent:!e.twelve.curriculumConsistent}))}
                   >
                     <span className="icon">{elig.twelve.curriculumConsistent?"✓":""}</span>
                     국가 이동·학제 변경이 있어도 학년 중복/누락 없음
@@ -746,8 +758,9 @@ function App(){
                   <td>
                     <input
                       type="date"
-                      value={y.from}
-                      onChange={e=>{
+                      defaultValue={y.from}
+                      ref={yRefs.current[idx].from}
+                      onBlur={e=>{
                         const newArr=[...years];
                         newArr[idx]={...newArr[idx],from:e.target.value};
                         setYears(newArr);
@@ -757,8 +770,9 @@ function App(){
                   <td>
                     <input
                       type="date"
-                      value={y.to}
-                      onChange={e=>{
+                      defaultValue={y.to}
+                      ref={yRefs.current[idx].to}
+                      onBlur={e=>{
                         const newArr=[...years];
                         newArr[idx]={...newArr[idx],to:e.target.value};
                         setYears(newArr);
@@ -771,8 +785,9 @@ function App(){
                       type="number"
                       inputMode="numeric"
                       min="0"
-                      value={y.krStudent}
-                      onChange={e=>{
+                      defaultValue={y.krStudent}
+                      ref={yRefs.current[idx].stu}
+                      onBlur={e=>{
                         const newArr=[...years];
                         newArr[idx]={...newArr[idx],krStudent:e.target.value};
                         setYears(newArr);
@@ -785,8 +800,9 @@ function App(){
                       type="number"
                       inputMode="numeric"
                       min="0"
-                      value={y.krParent}
-                      onChange={e=>{
+                      defaultValue={y.krParent}
+                      ref={yRefs.current[idx].par}
+                      onBlur={e=>{
                         const newArr=[...years];
                         newArr[idx]={...newArr[idx],krParent:e.target.value};
                         setYears(newArr);
