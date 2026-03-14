@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>재외국민특별전형 자가진단 계산기</title>
+<title>재외국민특별전형 자가진단 위저드</title>
 <!-- React 18 UMD & Babel Standalone -->
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap');
@@ -357,6 +357,9 @@ function App(){
           <div className="field-group">
             <label className="field-label">체류국 / 지역 (선택)<span>예: 미국 캘리포니아, 중국 상하이</span></label>
             <input
+              autoComplete="off"
+              inputMode="text"
+              spellCheck={false}
               value={profile.country}
               onChange={e=>setProfile({...profile,country:e.target.value})}
               placeholder="예: 미국 캘리포니아, 중국 상하이 (생략 가능)"
@@ -766,6 +769,7 @@ function App(){
                   <td>
                     <input
                       type="number"
+                      inputMode="numeric"
                       min="0"
                       value={y.krStudent}
                       onChange={e=>{
@@ -779,6 +783,7 @@ function App(){
                   <td>
                     <input
                       type="number"
+                      inputMode="numeric"
                       min="0"
                       value={y.krParent}
                       onChange={e=>{
@@ -898,7 +903,7 @@ function App(){
   return (
     <>
       <header className="app-header">
-        <h1>재외국민 3특·12특 자가진단 계산기</h1>
+        <h1>재외국민 3특·12특 자가진단 위저드</h1>
         <p>체류국·학교·체류일만 넣으면, 누구나 스스로 지원 가능성을 가늠할 수 있는 페이지입니다.</p>
       </header>
 
@@ -952,4 +957,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
 </html>
-
